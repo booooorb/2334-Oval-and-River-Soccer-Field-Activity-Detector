@@ -43,15 +43,17 @@ jobs:
       - name: Set capture timestamp
         if: steps.window.outputs.in_window == 'true'
         id: capture
+        env:
+          TZ: America/Vancouver
         run: |
           echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> "$GITHUB_OUTPUT"
-          echo "date_path=$(date -u +'%Y/%m/%d')" >> "$GITHUB_OUTPUT"
+          echo "date_path=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
       - name: Download image
         if: steps.window.outputs.in_window == 'true'
         run: |
-          mkdir -p "captures/${{ steps.capture.outputs.date_path }}"
-          output="captures/${{ steps.capture.outputs.date_path }}/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
+          mkdir -p "data/${{ steps.capture.outputs.date_path }}"
+          output="data/${{ steps.capture.outputs.date_path }}/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
           curl --fail --location --retry 3 --retry-delay 5 \
             --user-agent "GitHubActions/${GITHUB_REPOSITORY}" \
             "$CAMERA_IMAGE_URL" \
@@ -63,7 +65,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add captures/
+          git add data/
           git commit -m "Add camera capture ${{ steps.capture.outputs.timestamp }}"
           git pull --rebase origin "$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
