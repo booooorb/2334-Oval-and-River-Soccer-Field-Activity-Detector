@@ -1,0 +1,45 @@
+name: Fetch camera image
+
+on:
+  schedule:
+    - cron: "1/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fetch-camera-image
+  cancel-in-progress: false
+
+env:
+  CAMERA_IMAGE_URL: https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
+  CAMERA_IMAGE_NAME: vdd_oval_river_wb
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Set capture timestamp
+        id: capture
+        run: echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> "$GITHUB_OUTPUT"
+
+      - name: Download image
+        run: |
+          mkdir -p captures
+          output="captures/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
+          curl --fail --location --retry 3 --retry-delay 5 \
+            --user-agent "GitHubActions/${GITHUB_REPOSITORY}" \
+            "$CAMERA_IMAGE_URL" \
+            --output "$output"
+          test -s "$output"
+
+      - name: Upload captured image
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.CAMERA_IMAGE_NAME }}-${{ steps.capture.outputs.timestamp }}
+          path: captures/*.jpg
+          if-no-files-found: error
+          retention-days: 30
