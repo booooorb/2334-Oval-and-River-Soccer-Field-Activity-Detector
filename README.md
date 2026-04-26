@@ -10,6 +10,6 @@ minute from the top of the hour:
 https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
 ```
 
-Each captured JPG is uploaded as a GitHub Actions artifact and retained for
-30 days. You can also run the workflow manually from the Actions tab with
-the "Fetch camera image" workflow.
+Each captured JPG is committed into the repository under `captures/YYYY/MM/DD/`.
+You can also run the workflow manually from the Actions tab with the
+"Fetch camera image" workflow.

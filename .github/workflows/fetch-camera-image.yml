@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: fetch-camera-image
@@ -22,24 +22,30 @@ jobs:
     timeout-minutes: 3
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
       - name: Set capture timestamp
         id: capture
-        run: echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> "$GITHUB_OUTPUT"
+          echo "date_path=$(date -u +'%Y/%m/%d')" >> "$GITHUB_OUTPUT"
 
       - name: Download image
         run: |
-          mkdir -p captures
-          output="captures/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
+          mkdir -p "captures/${{ steps.capture.outputs.date_path }}"
+          output="captures/${{ steps.capture.outputs.date_path }}/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
           curl --fail --location --retry 3 --retry-delay 5 \
             --user-agent "GitHubActions/${GITHUB_REPOSITORY}" \
             "$CAMERA_IMAGE_URL" \
             --output "$output"
           test -s "$output"
 
-      - name: Upload captured image
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ env.CAMERA_IMAGE_NAME }}-${{ steps.capture.outputs.timestamp }}
-          path: captures/*.jpg
-          if-no-files-found: error
-          retention-days: 30
+      - name: Commit captured image
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add captures/
+          git commit -m "Add camera capture ${{ steps.capture.outputs.timestamp }}"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
