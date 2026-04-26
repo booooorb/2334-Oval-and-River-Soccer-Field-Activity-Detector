@@ -28,7 +28,9 @@ jobs:
           TZ: America/Vancouver
         run: |
           hour="$(date +'%H')"
-          if [ "$hour" -ge 8 ] && [ "$hour" -lt 22 ]; then
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "in_window=true" >> "$GITHUB_OUTPUT"
+          elif [ "$hour" -ge 8 ] && [ "$hour" -lt 22 ]; then
             echo "in_window=true" >> "$GITHUB_OUTPUT"
           else
             echo "in_window=false" >> "$GITHUB_OUTPUT"
