@@ -2,7 +2,7 @@ name: Fetch camera image
 
 on:
   schedule:
-    - cron: "1/5 * * * *"
+    - cron: "*/5 0-6,15-23 * * *"
   workflow_dispatch:
 
 permissions:
@@ -22,16 +22,31 @@ jobs:
     timeout-minutes: 3
 
     steps:
+      - name: Check capture window
+        id: window
+        env:
+          TZ: America/Vancouver
+        run: |
+          hour="$(date +'%H')"
+          if [ "$hour" -ge 8 ] && [ "$hour" -lt 22 ]; then
+            echo "in_window=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "in_window=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check out repository
+        if: steps.window.outputs.in_window == 'true'
         uses: actions/checkout@v6
 
       - name: Set capture timestamp
+        if: steps.window.outputs.in_window == 'true'
         id: capture
         run: |
           echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> "$GITHUB_OUTPUT"
           echo "date_path=$(date -u +'%Y/%m/%d')" >> "$GITHUB_OUTPUT"
 
       - name: Download image
+        if: steps.window.outputs.in_window == 'true'
         run: |
           mkdir -p "captures/${{ steps.capture.outputs.date_path }}"
           output="captures/${{ steps.capture.outputs.date_path }}/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
@@ -42,6 +57,7 @@ jobs:
           test -s "$output"
 
       - name: Commit captured image
+        if: steps.window.outputs.in_window == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

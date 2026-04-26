@@ -3,8 +3,8 @@ Data source: https://www.richmond.ca/services/transportation/trafficcameras/Defa
 ## Scheduled camera capture
 
 The workflow in `.github/workflows/fetch-camera-image.yml` fetches the
-Oval and River westbound traffic camera image every 5 minutes, offset one
-minute from the top of the hour:
+Oval and River westbound traffic camera image every 5 minutes from 8:00 AM
+to 10:00 PM Vancouver time:
 
 ```text
 https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
