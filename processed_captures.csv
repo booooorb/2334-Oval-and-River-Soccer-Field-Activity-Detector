@@ -1,0 +1,2 @@
+image_id,timestamp,raw_path,masked_path,predicted_label,confidence,predicted_at
+2026-04-27/vdd_oval_river_wb_20260427T235711Z.jpg,20260427T235711Z,data/raw/2026-04-27/vdd_oval_river_wb_20260427T235711Z.jpg,data/masked/2026-04-27/vdd_oval_river_wb_20260427T235711Z.jpg,,,
