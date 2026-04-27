@@ -15,6 +15,7 @@ concurrency:
 env:
   CAMERA_IMAGE_URL: https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
   CAMERA_IMAGE_NAME: vdd_oval_river_wb
+  DATA_BRANCH: data
 
 jobs:
   fetch:
@@ -39,6 +40,8 @@ jobs:
       - name: Check out repository
         if: steps.window.outputs.in_window == 'true'
         uses: actions/checkout@v6
+        with:
+          ref: ${{ env.DATA_BRANCH }}
 
       - name: Set capture timestamp
         if: steps.window.outputs.in_window == 'true'
@@ -67,5 +70,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
           git commit -m "Add camera capture ${{ steps.capture.outputs.timestamp }}"
-          git pull --rebase origin "$GITHUB_REF_NAME"
-          git push origin "HEAD:$GITHUB_REF_NAME"
+          git pull --rebase origin "$DATA_BRANCH"
+          git push origin "HEAD:$DATA_BRANCH"

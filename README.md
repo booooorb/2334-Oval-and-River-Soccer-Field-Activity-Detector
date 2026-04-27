@@ -10,4 +10,5 @@ to 10:00 PM Vancouver time.
 https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
 ```
 
-Each captured JPG is committed into the repository under `data/YYYY-MM-DD/`.
+Each captured JPG is committed to the `data` branch under `data/YYYY-MM-DD/`,
+keeping camera-image commits out of `main`.
