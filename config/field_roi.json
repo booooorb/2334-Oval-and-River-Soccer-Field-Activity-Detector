@@ -1,0 +1,25 @@
+{
+  "source_size": [1280, 720],
+  "crop_box": [0, 0, 540, 200],
+  "exclude_polygons": {
+    "top_rectangle": [
+      [0, 0],
+      [540, 0],
+      [540, 16],
+      [0, 16]
+    ],
+    "top_left_slope": [
+      [0, 16],
+      [180, 16],
+      [0, 48]
+    ],
+    "bottom_slope": [
+      [0, 178],
+      [540, 25],
+      [540, 200],
+      [0, 200]
+    ]
+  },
+  "downsample_size": [270, 100],
+  "mask_fill_rgb": [0, 0, 0]
+}
