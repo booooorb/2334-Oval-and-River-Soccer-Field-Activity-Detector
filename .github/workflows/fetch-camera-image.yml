@@ -16,11 +16,19 @@ env:
   CAMERA_IMAGE_URL: https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
   CAMERA_IMAGE_NAME: vdd_oval_river_wb
   DATA_BRANCH: data
+  PROCESSED_BRANCH: processed-data
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    outputs:
+      in_window: ${{ steps.window.outputs.in_window }}
+      timestamp: ${{ steps.capture.outputs.timestamp }}
+      date_path: ${{ steps.capture.outputs.date_path }}
+      file_name: ${{ steps.capture.outputs.file_name }}
+      raw_path: ${{ steps.capture.outputs.raw_path }}
+      processed_path: ${{ steps.capture.outputs.processed_path }}
 
     steps:
       - name: Check capture window
@@ -49,14 +57,20 @@ jobs:
         env:
           TZ: America/Vancouver
         run: |
-          echo "timestamp=$(date -u +'%Y%m%dT%H%M%SZ')" >> "$GITHUB_OUTPUT"
-          echo "date_path=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+          timestamp="$(date -u +'%Y%m%dT%H%M%SZ')"
+          date_path="$(date +'%Y-%m-%d')"
+          file_name="${CAMERA_IMAGE_NAME}_${timestamp}.jpg"
+          echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+          echo "date_path=$date_path" >> "$GITHUB_OUTPUT"
+          echo "file_name=$file_name" >> "$GITHUB_OUTPUT"
+          echo "raw_path=data/raw/$date_path/$file_name" >> "$GITHUB_OUTPUT"
+          echo "processed_path=data/masked/$date_path/$file_name" >> "$GITHUB_OUTPUT"
 
       - name: Download image
         if: steps.window.outputs.in_window == 'true'
         run: |
-          mkdir -p "data/${{ steps.capture.outputs.date_path }}"
-          output="data/${{ steps.capture.outputs.date_path }}/${CAMERA_IMAGE_NAME}_${{ steps.capture.outputs.timestamp }}.jpg"
+          output="${{ steps.capture.outputs.raw_path }}"
+          mkdir -p "$(dirname "$output")"
           curl --fail --location --retry 3 --retry-delay 5 \
             --user-agent "GitHubActions/${GITHUB_REPOSITORY}" \
             "$CAMERA_IMAGE_URL" \
@@ -68,7 +82,69 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add "${{ steps.capture.outputs.raw_path }}"
           git commit -m "Add camera capture ${{ steps.capture.outputs.timestamp }}"
           git pull --rebase origin "$DATA_BRANCH"
           git push origin "HEAD:$DATA_BRANCH"
+
+  process:
+    needs: fetch
+    if: needs.fetch.outputs.in_window == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out processing code
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: code
+
+      - name: Check out raw data
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+          path: raw-data
+
+      - name: Check out processed data
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.PROCESSED_BRANCH }}
+          path: processed-data
+
+      - name: Install processing dependencies
+        run: python -m pip install -r code/requirements.txt
+
+      - name: Crop and mask image
+        run: |
+          python code/src/roi_preprocess.py \
+            "raw-data/${{ needs.fetch.outputs.raw_path }}" \
+            "processed-data/${{ needs.fetch.outputs.processed_path }}" \
+            --config "code/config/field_roi.json" \
+            --no-downsample
+
+      - name: Update processed capture manifest
+        working-directory: processed-data
+        run: |
+          manifest="processed_captures.csv"
+          image_id="${{ needs.fetch.outputs.date_path }}/${{ needs.fetch.outputs.file_name }}"
+          if [ ! -f "$manifest" ]; then
+            echo "image_id,timestamp,raw_path,masked_path,predicted_label,confidence,predicted_at" > "$manifest"
+          fi
+          if ! grep -Fq "$image_id," "$manifest"; then
+            echo "$image_id,${{ needs.fetch.outputs.timestamp }},${{ needs.fetch.outputs.raw_path }},${{ needs.fetch.outputs.processed_path }},,," >> "$manifest"
+          fi
+
+      - name: Commit processed image
+        working-directory: processed-data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${{ needs.fetch.outputs.processed_path }}" processed_captures.csv
+          if git diff --cached --quiet; then
+            echo "No processed changes to commit"
+            exit 0
+          fi
+          git commit -m "Add processed camera capture ${{ needs.fetch.outputs.timestamp }}"
+          git pull --rebase origin "$PROCESSED_BRANCH"
+          git push origin "HEAD:$PROCESSED_BRANCH"
