@@ -23,3 +23,27 @@ Raw frames are reduced before they reach the detector:
   -> black out irrelevant pixels with three polygons
 ```
 
+## Simple local data flow
+
+Run one command to fetch new raw images from GitHub's `data` branch, regenerate
+processed images, and add any new rows to `labels/labels.csv`:
+
+```powershell
+& "D:\Downloads\a5_code_data\python-embed\python.exe" src\update_data.py
+```
+
+This creates:
+
+```text
+data/
+  raw/YYYY-MM-DD/
+  roi/YYYY-MM-DD/
+  masked/YYYY-MM-DD/
+labels/
+  labels.csv
+```
+
+Edit only the `label` column in `labels/labels.csv` with `active`, `inactive`,
+or `discard`. Syncing new raw data adds new label rows without removing existing
+labels.
+
