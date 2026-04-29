@@ -25,6 +25,8 @@ jobs:
     outputs:
       in_window: ${{ steps.window.outputs.in_window }}
       timestamp: ${{ steps.capture.outputs.timestamp }}
+      captured_at_utc: ${{ steps.capture.outputs.captured_at_utc }}
+      captured_at_local: ${{ steps.capture.outputs.captured_at_local }}
       date_path: ${{ steps.capture.outputs.date_path }}
       file_name: ${{ steps.capture.outputs.file_name }}
       raw_path: ${{ steps.capture.outputs.raw_path }}
@@ -57,10 +59,14 @@ jobs:
         env:
           TZ: America/Vancouver
         run: |
-          timestamp="$(date -u +'%Y%m%dT%H%M%SZ')"
+          timestamp="$(date +'%Y%m%dT%H%M%S%z')"
+          captured_at_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          captured_at_local="$(date +'%Y-%m-%dT%H:%M:%S%:z')"
           date_path="$(date +'%Y-%m-%d')"
           file_name="${CAMERA_IMAGE_NAME}_${timestamp}.jpg"
           echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+          echo "captured_at_utc=$captured_at_utc" >> "$GITHUB_OUTPUT"
+          echo "captured_at_local=$captured_at_local" >> "$GITHUB_OUTPUT"
           echo "date_path=$date_path" >> "$GITHUB_OUTPUT"
           echo "file_name=$file_name" >> "$GITHUB_OUTPUT"
           echo "raw_path=data/raw/$date_path/$file_name" >> "$GITHUB_OUTPUT"
@@ -77,12 +83,24 @@ jobs:
             --output "$output"
           test -s "$output"
 
+      - name: Update capture manifest
+        if: steps.window.outputs.in_window == 'true'
+        run: |
+          manifest="data/captures.csv"
+          image_id="${{ steps.capture.outputs.date_path }}/${{ steps.capture.outputs.file_name }}"
+          if [ ! -f "$manifest" ]; then
+            echo "image_id,captured_at_utc,captured_at_local,raw_path" > "$manifest"
+          fi
+          if ! grep -Fq "$image_id," "$manifest"; then
+            echo "$image_id,${{ steps.capture.outputs.captured_at_utc }},${{ steps.capture.outputs.captured_at_local }},${{ steps.capture.outputs.raw_path }}" >> "$manifest"
+          fi
+
       - name: Commit captured image
         if: steps.window.outputs.in_window == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "${{ steps.capture.outputs.raw_path }}"
+          git add "${{ steps.capture.outputs.raw_path }}" data/captures.csv
           git commit -m "Add camera capture ${{ steps.capture.outputs.timestamp }}"
           git pull --rebase origin "$DATA_BRANCH"
           git push origin "HEAD:$DATA_BRANCH"
@@ -129,10 +147,10 @@ jobs:
           manifest="processed_captures.csv"
           image_id="${{ needs.fetch.outputs.date_path }}/${{ needs.fetch.outputs.file_name }}"
           if [ ! -f "$manifest" ]; then
-            echo "image_id,timestamp,raw_path,masked_path,predicted_label,confidence,predicted_at" > "$manifest"
+            echo "image_id,timestamp,captured_at_utc,captured_at_local,raw_path,masked_path,predicted_label,confidence,predicted_at" > "$manifest"
           fi
           if ! grep -Fq "$image_id," "$manifest"; then
-            echo "$image_id,${{ needs.fetch.outputs.timestamp }},${{ needs.fetch.outputs.raw_path }},${{ needs.fetch.outputs.processed_path }},,," >> "$manifest"
+            echo "$image_id,${{ needs.fetch.outputs.timestamp }},${{ needs.fetch.outputs.captured_at_utc }},${{ needs.fetch.outputs.captured_at_local }},${{ needs.fetch.outputs.raw_path }},${{ needs.fetch.outputs.processed_path }},,," >> "$manifest"
           fi
 
       - name: Commit processed image
