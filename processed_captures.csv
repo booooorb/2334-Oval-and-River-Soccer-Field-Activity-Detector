@@ -11,3 +11,4 @@ image_id,timestamp,raw_path,masked_path,predicted_label,confidence,predicted_at
 2026-04-28/vdd_oval_river_wb_20260429T000833Z.jpg,20260429T000833Z,data/raw/2026-04-28/vdd_oval_river_wb_20260429T000833Z.jpg,data/masked/2026-04-28/vdd_oval_river_wb_20260429T000833Z.jpg,,,
 2026-04-28/vdd_oval_river_wb_20260429T040210Z.jpg,20260429T040210Z,data/raw/2026-04-28/vdd_oval_river_wb_20260429T040210Z.jpg,data/masked/2026-04-28/vdd_oval_river_wb_20260429T040210Z.jpg,,,
 2026-04-29/vdd_oval_river_wb_20260429T092724-0700.jpg,20260429T092724-0700,2026-04-29T16:27:24Z,2026-04-29T09:27:24-07:00,data/raw/2026-04-29/vdd_oval_river_wb_20260429T092724-0700.jpg,data/masked/2026-04-29/vdd_oval_river_wb_20260429T092724-0700.jpg,,,
+2026-04-29/vdd_oval_river_wb_20260429T105818-0700.jpg,20260429T105818-0700,2026-04-29T17:58:18Z,2026-04-29T10:58:18-07:00,data/raw/2026-04-29/vdd_oval_river_wb_20260429T105818-0700.jpg,data/masked/2026-04-29/vdd_oval_river_wb_20260429T105818-0700.jpg,,,
