@@ -19,9 +19,16 @@ Raw frames are reduced before they reach the detector:
 
 ```text
 1280x720 full image
+  -> estimate camera translation against the fixed 2026-04-28T16:11:48-07:00 reference frame
+  -> reject suspicious jumps using the previous usable frame as a continuity check
+  -> shift the full image back into that reference view
+  -> fill newly exposed pixels with black
   -> top-left 540x200 crop
   -> black out irrelevant pixels with three polygons
 ```
+
+Black pixels are ignored by the detectors, so empty pixels introduced by
+stabilization have zero weight.
 
 ## Simple local data flow
 

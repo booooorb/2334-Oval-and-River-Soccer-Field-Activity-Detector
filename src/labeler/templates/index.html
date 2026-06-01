@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field Labeler</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    window.LABELER_ROWS = __ROWS_JSON__;
+    window.LABELER_COUNTS = __COUNTS_JSON__;
+  </script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Field Labeler</h1>
+    <button type="button" id="updateData">Update Data</button>
+    <div class="stats" id="stats"></div>
+  </header>
+  <main>
+    <section class="viewer">
+      <div class="meta" id="meta"></div>
+      <div class="image-compare">
+        <div class="media-panel">
+          <div class="media-title">Masked frame</div>
+          <div class="image-wrap"><img id="image" alt=""></div>
+        </div>
+        <div class="media-panel">
+          <div class="media-title">Foreground</div>
+          <div class="image-wrap foreground-wrap">
+            <img id="foregroundImage" alt="">
+            <div class="empty-foreground" id="foregroundEmpty">Run a detector to view foreground.</div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button type="button" id="prev">Previous</button>
+        <button type="button" id="next">Next unlabeled</button>
+        <button type="button" id="nextAny">Next</button>
+      </div>
+    </section>
+    <aside>
+      <div class="labels">
+        <button type="button" data-label="inactive">Inactive</button>
+        <button type="button" data-label="active">Active</button>
+        <button type="button" data-label="discard">Discard</button>
+        <button type="button" data-label="">Clear</button>
+      </div>
+      <textarea id="notes" placeholder="Notes"></textarea>
+      <div class="list" id="list"></div>
+    </aside>
+  </main>
+  <section class="experiment">
+    <div class="experiment-head">
+      <h2>Detector Comparison</h2>
+      <div class="model-options">
+        <label><input type="checkbox" name="model" value="balanced_previous_diff_blur" checked> Grayscale balanced previous diff blur</label>
+        <label><input type="checkbox" name="model" value="balanced_previous_diff_blur_lumps"> Grayscale balanced previous diff lumps</label>
+        <label><input type="checkbox" name="model" value="balanced_previous_diff_blur_lumps_deploy"> Deployment-faithful grayscale/RGB lumps</label>
+        <label><input type="checkbox" name="model" value="tiny_cnn_activity"> Tiny CNN activity</label>
+        <label><input type="checkbox" name="model" value="blur_stabilized_balanced_previous_diff"> Blur-stabilized balanced previous diff</label>
+        <label><input type="checkbox" name="model" value="gmm_mog2_foreground_motion"> GMM inactive background + new motion</label>
+        <label><input type="checkbox" name="model" value="lab_bilateral_previous_diff"> Lab bilateral previous diff</label>
+        <label><input type="checkbox" name="model" value="lab_bilateral_previous_diff_color"> Lab bilateral color helper</label>
+        <label><input type="checkbox" name="model" value="lab_bilateral_previous_diff_color_strong"> Lab bilateral strong color helper</label>
+      </div>
+    </div>
+    <div class="experiment-grid">
+      <label>
+        Validation %
+        <input id="validationPercent" type="number" min="1" max="100" step="5" value="30">
+      </label>
+      <label>
+        Thresholds
+        <input id="thresholds" type="text" value="35">
+      </label>
+      <label>
+        Activity cutoffs
+        <input id="cutoffs" type="text" value="0.015,0.02,0.025,0.03">
+      </label>
+      <label>
+        Background/Bilateral windows
+        <input id="windows" type="text" value="5">
+      </label>
+      <label>
+        Min blob area
+        <input id="minBlobArea" type="number" min="1" value="20">
+      </label>
+      <label>
+        Gaussian blur
+        <input id="blurRadius" type="number" min="0" max="8" step="0.25" value="0">
+      </label>
+      <label>
+        Max shift
+        <input id="maxShiftPixels" type="number" min="0" max="8" step="1" value="0">
+      </label>
+      <label>
+        Reference updates
+        <select id="referenceUpdateMode">
+          <option value="manual_inactive">Approved inactive labels</option>
+          <option value="predicted_inactive">High-confidence predicted inactive</option>
+        </select>
+      </label>
+      <label>
+        Reference strategy
+        <select id="referenceStrategy">
+          <option value="latest">Latest inactive</option>
+          <option value="rolling_median">Rolling median</option>
+          <option value="same_time_of_day">Same time of day</option>
+          <option value="nearest_past">Nearest past inactive</option>
+        </select>
+      </label>
+      <label>
+        Min lump area
+        <input id="minLumpArea" type="number" min="1" value="7">
+      </label>
+      <label>
+        Max lump area
+        <input id="maxLumpArea" type="number" min="1" value="120">
+      </label>
+      <label>
+        Min lump density
+        <input id="minLumpDensity" type="number" min="0.01" max="1" step="0.01" value="0.20">
+      </label>
+      <label>
+        Max lump aspect
+        <input id="maxLumpAspect" type="number" min="1" step="0.1" value="5.0">
+      </label>
+      <label>
+        Artifact penalty
+        <input id="artifactPenalty" type="number" min="0" step="0.1" value="1.5">
+      </label>
+      <label>
+        Inactive confidence
+        <input id="highConfidenceInactive" type="number" min="0.5" max="1" step="0.05" value="0.75">
+      </label>
+      <label>
+        Hysteresis margin
+        <input id="hysteresisMargin" type="number" min="0" max="1" step="0.05" value="0.10">
+      </label>
+      <label>
+        RGB helper weight
+        <input id="rgbColorWeight" type="number" min="0" step="0.05" value="0.00">
+      </label>
+      <label class="checkbox-option">
+        Auto tune RGB/lumps
+        <input id="autoTuneLumps" type="checkbox">
+      </label>
+      <button type="button" id="runModels">Run</button>
+    </div>
+    <div class="experiment-status" id="experimentStatus"></div>
+    <div class="model-results" id="modelResults"></div>
+    <div class="prediction-table" id="predictionTable"></div>
+  </section>
+</body>
+</html>

@@ -68,8 +68,8 @@ def sync_raw_images(remote: str, branch: str, raw_root: Path, cache_root: Path) 
         relative = source.relative_to(source_root)
         parts = relative.parts
 
-        if len(parts) >= 3 and parts[1] == "raw":
-            date = parts[0]
+        if len(parts) >= 3 and parts[0] == "raw":
+            date = parts[1]
             file_name = parts[-1]
         elif len(parts) == 2:
             date = parts[0]

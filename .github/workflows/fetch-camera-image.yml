@@ -133,12 +133,13 @@ jobs:
       - name: Install processing dependencies
         run: python -m pip install -r code/requirements.txt
 
-      - name: Crop and mask image
+      - name: Stabilize, crop and mask image
         run: |
           python code/src/roi_preprocess.py \
             "raw-data/${{ needs.fetch.outputs.raw_path }}" \
             "processed-data/${{ needs.fetch.outputs.processed_path }}" \
             --config "code/config/field_roi.json" \
+            --reference-root "raw-data/data/raw" \
             --no-downsample
 
       - name: Update processed capture manifest
