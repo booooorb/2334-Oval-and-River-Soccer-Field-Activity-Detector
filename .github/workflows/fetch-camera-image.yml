@@ -1,6 +1,10 @@
 name: Fetch camera image
 
 on:
+  schedule:
+    # Avoid minute 0, when GitHub's scheduler is busiest.
+    - cron: "2-57/5 8-21 * * *"
+      timezone: America/Vancouver
   workflow_dispatch:
 
 permissions:

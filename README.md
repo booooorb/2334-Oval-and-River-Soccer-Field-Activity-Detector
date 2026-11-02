@@ -4,7 +4,11 @@ Data source: https://www.richmond.ca/services/transportation/trafficcameras/Defa
 
 The workflow in `.github/workflows/fetch-camera-image.yml` fetches the
 Oval and River westbound traffic camera image every 5 minutes from 8:00 AM
-to 10:00 PM PST.
+to 10:00 PM in `America/Vancouver`, automatically adjusting for daylight saving
+time. Scheduled times are 2, 7, 12, ..., 57 minutes past each hour to avoid the
+busiest part of GitHub's scheduler. GitHub may delay or skip scheduled runs when
+its hosted runners are unavailable; manual captures can also be started from
+the workflow's **Run workflow** button.
 
 ```text
 https://www.richmond.ca/trafficcam/vdd_oval_river_wb.jpg
